@@ -1,0 +1,321 @@
+ <!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8">
+
+	<title>MAT-156</title>
+	<link rel="stylesheet" type="text/css" href="estilo.css">
+  <script src='https://cdn.plot.ly/plotly-2.14.0.min.js'></script>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src='https://cdn.plot.ly/plotly-2.14.0.min.js'></script>
+</head>
+<body>
+	<header>SISTEMA DE ECUACIONES</header>
+	<section>
+		 <div>
+      <div>
+        <div class="servicios">
+          <div>
+            <header>Numero de incognitas</header>
+            <header><input id="filas" type="text" placeholder="Numero de filas"><br></header>
+          </div>
+        </div>
+        <div>
+          <header><button class="btn btn-primary mt-3" onclick="crearsistemas()">Crear Sistema</button></header>
+        </div>
+      </div>
+    </div>
+
+    <center><script>
+        function crearsistemas() {
+          document.getElementById("sistema").innerHTML="";
+          for(var i=0; i<filas.value; i++) {
+            for(var j=0; j<filas.value; j++) {
+              document.getElementById("sistema").innerHTML+="<input id='"+i+j+"' name='dato[]' class='datos' type='text' placeholder='a "+i+j+"'>";
+            }
+            document.getElementById("sistema").innerHTML+="<input id='"+i+"' name='datob[]' class='datosb mx-5' type='text' placeholder='b "+i+"'>";
+            document.getElementById("sistema").innerHTML+="<br>";
+          }
+          
+          document.getElementById("sistema").innerHTML+='<select id="select1" class="form-select form-select-lg mb-3" aria-label=".form-select-lg example"">'+
+              '<option selected>Selecccionar el metodo de resolucion</option>'+
+              '<option value="1">JACOBI</option>'+
+              //'<option value="2">GAUSS SEIDEL</option>'+
+              //'<option value="3">DESCOMPOSCION LU</option>'+
+            '</select> <br>';
+
+            document.getElementById("sistema").innerHTML+="<input id='tole'  type='text' placeholder='Tolerancia'><br>";
+          
+          document.getElementById("sistema").innerHTML+='<button class="btn btn-primary mt-3" onclick="solucionarsistemas()">Solucionar Sistema</button>';
+          
+        }
+
+        function solucionarsistemas() {
+          document.getElementById("resolucionsistema").innerHTML="";
+          const $select = document.querySelector("#select1").value;
+            
+          matrixa = [[3, -1, 1],[3, 6, 2],[3, 3, 7]];
+        // matrixa = matriz();
+        
+        //   matrixb = matrizb();
+
+          matrixb = [[1, 0, 4]];
+          // tol = tole.value;
+        tol=0.0005;
+          
+          switch ($select) {
+            case "1":
+              jacobi(matrixa, matrixb, tol);
+              if(filas.value==3){
+                graficar();
+              }
+              break;
+            case "2":
+              document.getElementById("resolucionsistema").innerHTML+="<br>ESTOY SOLUCIONANDO POR SEIDEL";
+              break;
+            case "3":
+                document.getElementById("resolucionsistema").innerHTML+="<br>ESTOY SOLUCIONANDO POR LU";
+              break;
+            default:
+              document.getElementById("resolucionsistema").innerHTML="<br>SELECCIONA UNA OPCION DE RESOLUCION";
+              break;
+          }
+        }
+
+        function matriz() {
+          var arrayInputsa = new Array();
+          var valuesInputs = document.getElementsByClassName('datos'),
+          namesValues = [].map.call(valuesInputs, 
+              function(dataInput) {
+                arrayInputsa.push(dataInput.value);
+              });
+              var matrizreala = arraymatrix(arrayInputsa, filas.value);
+              
+              return matrizreala;
+        }
+
+        function matrizb() {
+          var arrayInputsb = new Array();
+          var valuesInputsb = document.getElementsByClassName('datosb'),
+          namesValuesb = [].map.call(valuesInputsb, 
+              function(dataInputb) {
+                arrayInputsb.push(dataInputb.value);
+              });
+              var matrizrealb = arraymatrix(arrayInputsb, filas.value);
+              return matrizrealb;
+        }
+
+        function arraymatrix(list, elementsPerSubArray) {
+          var matrix = [], i, k;
+          for (i = 0, k = -1; i < list.length; i++) {
+              if (i % elementsPerSubArray === 0) {
+                  k++;
+                  matrix[k] = [];
+              }
+              matrix[k].push(list[i]);
+          }
+          return matrix;
+      }
+
+      function jacobi(matrixa, matrixb, tol) {
+          a = matrixa.slice();
+          m = zeros(matrixa);
+          b = matrixb.slice();
+          c = [];
+          for(var i=0; i<filas.value; i++) {
+            for(var j=0; j<filas.value; j++) {
+              if(i!=j){
+                m[i][j] = -a[i][j]/a[i][i];
+              }
+            }
+            c.push(b[0][i]/a[i][i]);
+          }
+          console.log(m);
+          nro_ite = 0
+          error = [];
+          x = zeros(matrixb);
+          sw=true;  
+
+          while(sw) {
+            x1 = zeros(matrixb);
+            suma = 0;
+
+            for(var i=0; i<filas.value; i++) {
+              for(var j=0; j<filas.value; j++) {
+                suma = suma + m[i][j]*x[0][j];
+              }
+              suma = suma + c[i];
+              x1[0][i]=suma;
+              suma = 0;
+              error[i] = Math.abs(x1[0][i] - x[0][i])  
+            }
+
+            max_error = 0;
+            for(var i=0; i<filas.value; i++) {
+              if(error[i]>max_error){
+                max_error = error[i];
+              } 
+            }
+            if(max_error<tol) {
+              sw=false;
+            }
+            x = x1.slice();
+            
+            document.getElementById("resolucionsistema").innerHTML+=nro_ite;
+            for(var i=0; i<filas.value; i++)
+              document.getElementById("resolucionsistema").innerHTML+="&nbsp&nbsp&nbsp&nbsp&nbsp&nbspx"+(i+1)+": "+x[0][i] ;
+            document.getElementById("resolucionsistema").innerHTML+="<br>";
+            nro_ite = nro_ite +1  ;
+          }
+
+        }
+
+        const zeros = (input) => {
+          let result = [];
+          input.forEach((row, i) => {
+            result.push([]);
+            row.forEach(col => {
+              result[i].push(0);
+            });
+          });
+          return result;
+        }
+
+        function graficar() {
+          var x1 = [], y1 = [];
+        function getrandomx(num) {
+            var value = [ ];
+            for ( i=0; i <= num; i++ ) {
+                for ( j=0; j <= num; j++ ) {
+                    value.push(j);
+                    x1.push(j);
+                }
+            }
+            console.log(x1);
+            return value;
+        }
+
+        function getrandomy(num) {
+            var value = [ ];
+            for ( i=0; i <= num; i++ ) {
+                for ( j=0; j <= num; j++ ) {
+                    value.push(i);
+                    y1.push(i);
+                }
+            }
+            console.log(y1);
+            return value;
+        }
+
+        function getrandomz(num) {
+            var value = [ ];
+            cont=0;
+            for ( i=0; i <= num*num; i=i+num ) {
+                for ( j=cont; j <=cont+num; j++ ) {
+                    value.push((matrixb[0][0] - (matrixa[0][0]*x1[j]) + (matrixa[0][1]*y1[j]))/matrixa[0][2]);
+                }
+                cont+=num+1;
+            }
+            console.log("ecuacion1"+value);
+            return value;
+        }
+
+        function getrandomz1(num) {
+            var value = [ ];
+            cont=0;
+            for ( i=0; i <= num*num; i=i+num ) {
+                for ( j=cont; j <=cont+num; j++ ) {
+                    value.push((matrixb[0][1] - (matrixa[1][0]*x1[j]) + (matrixa[1][1]*y1[j]))/matrixa[1][2]);
+                }
+                cont+=num+1;
+            }
+            console.log("ecuacion2"+value);
+            return value;
+        }
+
+        function getrandomz2(num) {
+            var value = [ ];
+            cont=0;
+            for ( i=0; i <= num*num; i=i+num ) {
+                for ( j=cont; j <=cont+num; j++ ) {
+                    value.push((matrixb[0][2] - (matrixa[2][0]*x1[j]) + (matrixa[2][1]*y1[j]))/matrixa[2][2]);
+                }
+                cont+=num+1;
+            }
+            console.log("ecuacion3"+value);
+            return value;
+        }
+
+        var trace1 =  {
+            opacity: 0.5,
+            color: 'green',
+            type: 'mesh3d',
+            x: getrandomx(50),
+            y: getrandomy(50),
+            z: getrandomz(50),
+            scene: "scene1"
+            };
+
+        var trace2 =  {
+            opacity: 0.5,
+            color: 'pink',
+            type: 'mesh3d',
+            x: getrandomx(50),
+            y: getrandomy(50),
+            z: getrandomz1(50),
+            scene: "scene2"
+            };
+
+        var trace3 = {
+            opacity: 0.5,
+            color: 'blue',
+            type: 'mesh3d',
+            x: getrandomx(50),
+            y: getrandomy(50),
+            z: getrandomz2(50),
+            scene: "scene3",
+            };
+
+        var layout = {
+            scene1: {
+                domain: {
+                    x: [0.0,  0.5],
+                    y: [0.5, 1.0]
+                },},
+            scene2: {
+                domain: {
+                    x: [0.5, 1],
+                    y: [0.5, 1.0]
+                }},
+            scene3: {
+                domain: {
+                    x: [0.0,  0.33],
+                    y: [0, 0.5]
+                },},
+          height: 600,
+          margin: {
+            l: 0,
+            r: 0,
+            b: 0,
+            t: 0,
+            pad: 0
+          },
+        }      
+            
+        Plotly.newPlot('myDiv', [trace1,trace2,trace3], layout);
+      }
+
+    </script></header>
+
+    <div id="sistema"></div>
+    <div id="resolucionsistema"></div>
+
+    <div id='myDiv'></div>
+
+	</section>
+	<script type="text/javascript" src="JDC.js"></script>
+	<footer color="cyan" FACE="inpact"><center><h3>@ 2022 By Jesus Calle</h3></center></footer>
+
+</body>
+</html>
